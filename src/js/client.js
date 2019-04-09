@@ -1,21 +1,48 @@
+// Import styles & icons
+import '@fortawesome/fontawesome-free/css/all.css';
+import '../scss/client.scss';
+import './shims';
+import console from './console';
+import helpers from './helpers';
 import UserMedia from './usermedia';
-import UserInterface from './userinterface';
-import UserChat from './userchat'
+import Settings from './settings';
 
-import merge from 'deepmerge';
 
-const defaultConfig = 
+/**
+ * Default configuration for Client
+ * @type {[type]}
+ */
+const _defaultConfig = 
 {
 	constraints : {
 		video: true,
 		audio: true
 	},
 
-	ui : {}
+	ui : {
+		monitor : {}
+	}
 }
+
+
+const _el = (tag) => {
+	let element = document.createElement(tag);
+	return element;
+}
+
+const _div = (className) => {
+	let div = _el('div');
+	div.className = className;
+	return div;
+}
+
 
 class Client
 {
+	/**
+	 * Class constructor
+	 * @type {Object}
+	 */
 	constructor( id, config = {} )
 	{
 		// Set root element
@@ -28,36 +55,69 @@ class Client
 		}
 
 		// Set config
-		this.config = merge(defaultConfig, config);
-		
-		// Initialize the UI
-		this.usermedia = new UserMedia(this.config.constraints);
+		this.config = helpers.merge(_defaultConfig, config);
+
+		// Initialize User Media
+		this.usermedia = new UserMedia(this.config.constraints, this.video);
+
+		this.addControl( 'capture', { label: 'Capture', icon: 'fas fa-video' }, this.onCaptureClick.bind(this) );
+		this.addControl( 'join', { label: 'Join', icon: 'fas fa-sign-in-alt' }, this.onJoinClick.bind(this) );
+		this.addControl( 'broadcast', { label: 'Broadcast', icon: 'fas fa-broadcast-tower' }, this.onBroadcastClick.bind(this) );
+		this.addControl( 'settings', { label: 'Settings', icon: 'fas fa-cog' }, this.onSettingsClick.bind(this) );
+
+		// Initialize Settings
+		this.settings = new Settings(this.ui.controls, { devices: this.usermedia.devices } );
+
+		// Reset the UI to zero state
+		this.reset();
+
 	}
 
 
 
-	initInterface()
-	{	
+	onCaptureClick(e){
 
-		if( this.element.getElementsByClassName('monitor').length )
+		const icon  = this.controls.capture.getElementsByTagName('i')[0];
+		const label = this.controls.capture.getElementsByTagName('label')[0];
+
+		if( this.isStreaming )
 		{
-			this.monitor = this.element.getElementsByClassName('monitor')[0];
+			this.usermedia.stop();
+			icon.classList.remove('fa-video-slash');
+			icon.classList.add('fa-video');
+			label.innerHTML = 'Capture';
 		} else {
-			this.monitor = this.element.createElement('div')
+			this.usermedia.capture();
+			icon.classList.remove('fa-video');
+			icon.classList.add('fa-video-slash');
+			label.innerHTML = 'Stop';
 		}
+		
+	}
 
-		// Add video
-		this.video = this.element.getElementsByTagName('video')[0] || document.createElement('video');
-		this.video.setAttribute('id','rtc-usermedia');
-		this.video.setAttribute('autoplay', '');
-		this.video.setAttribute('muted', '');
+	onJoinClick(e){
+		console.log('Join');
+	}
 
-		this.element.appendChild(this.video);
+	onBroadcastClick(e){
+		console.log('Broadcast');
+	}
 
-		if( this.config.chat && this.config.chat.enabled )
-		{
-			// Add chat layer
-		}
+	onSettingsClick(e){
+		this.settings.toggle();
+	}
+
+	/**
+	 * Reset to zero state
+	 */
+	reset()
+	{
+		// Disconnect from server if connected
+		this.disconnect();
+		// Stop capturing media
+		this.usermedia.stop();
+
+		this.video.srcObject = null;
 	}
 
 	/**
@@ -76,10 +136,123 @@ class Client
 
 	}
 
+	/**
+	 * Disconnect from active connection, if exists
+	 */
+	disconnect()
+	{
+		if( !! this.connection ) this.connection.close();
+
+		this.connection = null;
+	}
+
 	stopStream()
 	{
 		this.usermedia.stop();
 	}
+
+
+	addControl( name, config, clickFunction )
+	{
+		if( ! this._controls ) this._controls = {};
+
+		const control = document.createElement('div');
+
+		control.classList.add('control','control-'+name);
+		
+		// Add button
+		const button = document.createElement('button');
+
+		if( !! config.icon )
+		{
+			const icon = document.createElement('i');
+			icon.className = config.icon;
+			button.appendChild(icon);
+		}
+
+		button.onclick = clickFunction;
+
+		control.appendChild(button);
+
+		// Add label
+		const label = document.createElement('label');
+
+		label.innerHTML = config.label || name;
+
+		control.appendChild(label);
+		
+		this.ui.controls.appendChild(control);
+
+		this._controls[name] = control;
+	}
+
+	layer( name )
+	{
+		if( ! this._layers ) this._layers = {};
+
+		if( !! this._layers[name] ) return this._layers[name];
+
+		const children = this.element.getElementsByClassName('layer-'+name);
+
+		const element = children.length ? children[0] :  document.createElement('div');
+
+		element.classList.add('layer-'+name, 'layer');
+
+		this._layers[name] = element;
+
+		this.element.appendChild(element);
+
+		return this._layers[name];
+	}
+
+	/**
+	 * @return UI Object
+	 */
+	get ui() {
+
+		if( !! this._ui ) return this._ui;
+
+		this._ui = {
+			monitor : this.layer('monitor'),
+			peers : this.layer('peers'),
+			chat : this.layer('chat'),
+			controls : this.layer('controls'),
+		}
+
+		// Add video if not already there
+		if( ! this._ui.monitor.getElementsByTagName('video').length )
+		{
+			this._ui.monitor.append(document.createElement('video'));
+		}
+
+		return this._ui;
+	}
+
+	/**
+	 * Get the monitor video
+	 */
+	get video()
+	{
+		return this.ui.monitor.getElementsByTagName('video').item(0);
+	}
+
+	/**
+	 * Get added control elements
+	 */
+	get controls()
+	{
+		this._controls = this._controls || {}:
+
+		return this._controls;
+	}
+
+
+	get isStreaming()
+	{
+		return !! this.usermedia.stream;
+	}
+
+
 
 }
 
