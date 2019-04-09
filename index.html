@@ -6,7 +6,8 @@
         <title>RTClient Demo</title>
         <meta name="description" content="">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <link rel="apple-touch-icon" href="icon.png">
+        <link rel="apple-touch-icon" href="icon/apple-touch-icon.png">
+        <link rel="icon" href="icon/favicon.ico?v=1.0"> 
         <!-- Place favicon.ico in the root directory -->
         <link rel="stylesheet" href="dist/index.css">
         <link rel="stylesheet" href="dist/demo.css">
@@ -15,17 +16,11 @@
 
         <!-- Client Element-->
        	<h2>RTClient Demo</h2>
-       	<!-- Status / Toolbar -->
-       	<div id="toolbar">
-          <button id="sources">Sources</button>
-          <button id="capture">Capture</button>
-          <button id="connect">Connect</button>
-          <button id="stop">Stop</button>
-       	</div>
+      
        	<!-- Client element -->
        	<div id="rtclient">
-          <div class="chat"></div>
-          <div class="monitor"><video></video></div>
+          <div class="layer-chat"></div>
+          <div class="layer-monitor"><video></video></div>
         </div>
 
         <div id="console"></div>
