@@ -22,18 +22,15 @@ class Usermedia
 		this.handleError = this.handleError.bind(this);
 	}
 
-
-
-
-
 	/**
 	 * Capture control over video/audio devices
 	 */
-	capture( callback )
+	capture( success, error )
 	{
-		const onSuccess = !! callback ? callback : this.onStream;
+		const onSuccess = !! success ? success : this.onStream;
+		const onError   = !! error   ? error   : this.handleError;
 		// this.media.getUserMedia(this.constraints).then(this.onStream).catch(this.handleError);
-		navigator.getUserMedia(this.constraints, onSuccess, this.handleError);
+		navigator.getUserMedia(this.constraints, onSuccess, onError);
 		// (this.constraints).then(this.onStream).catch(this.handleError);
 	}
 

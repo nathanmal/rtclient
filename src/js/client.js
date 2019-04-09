@@ -6,6 +6,7 @@ import console from './console';
 import helpers from './helpers';
 import UserMedia from './usermedia';
 import Settings from './settings';
+import Bowser from 'bowser';
 
 
 /**
@@ -57,6 +58,9 @@ class Client
 		// Set config
 		this.config = helpers.merge(_defaultConfig, config);
 
+		// Check compatibility
+		this.compat();
+
 		// Initialize User Media
 		this.usermedia = new UserMedia(this.config.constraints, this.video);
 
@@ -73,6 +77,34 @@ class Client
 
 	}
 
+
+	compat()
+	{
+		const browser = Bowser.getParser(window.navigator.userAgent);
+
+		this.user = browser.getResult();
+		
+		const compatible = browser.satisfies({
+			chrome: ">=53",
+			firefox: ">=36",
+			edge: ">=12",
+			safari: ">=11",
+			opera: ">=40",
+			mobile: {
+				safari: '>=9',
+				'android browser': '>=5'
+			}
+		});
+
+		if( compatible ) {
+			console.log('Compatible!');
+		} else {
+			console.log('Not Compatible!');
+		}
+		
+		console.log('User Agent');
+		console.log(this.user);
+	}
 
 
 	onCaptureClick(e){
@@ -241,7 +273,7 @@ class Client
 	 */
 	get controls()
 	{
-		this._controls = this._controls || {}:
+		this._controls = this._controls || {};
 
 		return this._controls;
 	}

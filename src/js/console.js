@@ -4,7 +4,7 @@ class console
 	{
 		const client = document.getElementById('rtclient');
 
-		let chat = client.getElementsByClassName('layer-dchat');
+		let chat = client.getElementsByClassName('layer-chat');
 
 		if( chat.length )
 		{	

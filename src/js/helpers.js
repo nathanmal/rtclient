@@ -37,6 +37,30 @@ class helpers
 		return str.charAt(0).toUpperCase() + str.slice(1)
 	}
 
+	/**
+	 * Test if var is a function
+	 */
+	static isFunction(fn)
+	{
+		return fn && {}.toString.call(fn) === '[object Function]';
+	}
+
+	/**
+	 * Test if var is an object
+	 */
+	static isObject(obj)
+	{
+		return obj !== null && obj!== undefined && typeof obj === 'object';
+	}
+
+	/**
+	 * Test if var is iterable
+	 */
+	static isIterable(obj)
+	{
+		return helpers.isObject(obj) || Array.isArray(obj);
+	}
+
 }
 
 
